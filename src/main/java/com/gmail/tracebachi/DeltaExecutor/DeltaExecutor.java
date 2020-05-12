@@ -28,8 +28,7 @@ import java.util.logging.Logger;
 /**
  * Created by Trace Bachi (tracebachi@gmail.com, BigBossZee) on 3/19/16.
  */
-public class DeltaExecutor
-{
+public class DeltaExecutor {
     private static DeltaExecutor instance;
 
     private volatile boolean acceptingNewTasks;
@@ -42,10 +41,8 @@ public class DeltaExecutor
     /**
      * @return Singleton reference to DeltaExecutor
      */
-    public static DeltaExecutor instance()
-    {
-        if(instance == null)
-        {
+    public static DeltaExecutor instance() {
+        if (instance == null) {
             throw new IllegalStateException("DeltaExecutor has not been initialized");
         }
 
@@ -55,16 +52,14 @@ public class DeltaExecutor
     /**
      * @return True if debug is enabled or false
      */
-    public boolean isDebugEnabled()
-    {
+    public boolean isDebugEnabled() {
         return debugEnabled;
     }
 
     /**
      * @param enable Boolean which controls if debug should be enabled or not
      */
-    public void setDebugEnabled(boolean enable)
-    {
+    public void setDebugEnabled(boolean enable) {
         this.debugEnabled = enable;
     }
 
@@ -75,8 +70,7 @@ public class DeltaExecutor
      *
      * @return True or false.
      */
-    public boolean isAcceptingNewTasks()
-    {
+    public boolean isAcceptingNewTasks() {
         return acceptingNewTasks;
     }
 
@@ -89,20 +83,16 @@ public class DeltaExecutor
      * @param toExecute Runnable to execute
      * @return Assigned task ID
      */
-    public long execute(Runnable toExecute)
-    {
+    public long execute(Runnable toExecute) {
         AsyncTask task = new AsyncTask(toExecute);
         Long id = task.getId();
 
         taskMap.put(task.getId(), task);
         debug("Queued task #" + id);
 
-        if(acceptingNewTasks)
-        {
+        if (acceptingNewTasks) {
             threadPoolExecutor.execute(() -> runTask(id));
-        }
-        else
-        {
+        } else {
             runTask(id);
         }
 
@@ -118,19 +108,14 @@ public class DeltaExecutor
      * being executed, or {@link CancelResult#NOT_FOUND} if the task ID is
      * unknown (either the task has completed or never existed)
      */
-    public CancelResult cancel(long taskId)
-    {
+    public CancelResult cancel(long taskId) {
         AsyncTask task = taskMap.get(taskId);
 
-        if(task != null)
-        {
-            if(task.switchToCancelled())
-            {
+        if (task != null) {
+            if (task.switchToCancelled()) {
                 debug("Task #" + taskId + " has been cancelled.");
                 return CancelResult.CANCELLED;
-            }
-            else
-            {
+            } else {
                 debug("Task #" + taskId + " could not be cancelled.");
                 return CancelResult.RUNNING;
             }
@@ -146,120 +131,101 @@ public class DeltaExecutor
      * In which case, worker threads will be interrupted and queued tasks will
      * be run synchronously.
      */
-    public void shutdown()
-    {
-        if(!acceptingNewTasks) { return; }
+    public void shutdown() {
+        if (!acceptingNewTasks) {
+            return;
+        }
 
         info("Shutting down DeltaExecutor ...");
 
         acceptingNewTasks = false;
         threadPoolExecutor.shutdown();
 
-        try
-        {
-            if(!shutdownNicely())
-            {
+        try {
+            if (!shutdownNicely()) {
                 shutdownForcibly();
             }
-        }
-        catch(InterruptedException e)
-        {
+        } catch (InterruptedException e) {
             e.printStackTrace();
             shutdownForcibly();
         }
 
         info("All tasks executed from this point on will be run synchronously.");
         info("Running tasks synchronously means your server may run slower if other plugins " +
-            "relying on DeltaExecutor use it assuming it is running tasks not synchronously.");
+                "relying on DeltaExecutor use it assuming it is running tasks not synchronously.");
     }
 
     static void initialize(Logger logger, int coreThreadCount, int maxThreadCount,
-                           int idleThreadTimeout, int niceShutdownPasses, boolean debugEnabled)
-    {
-        if(instance != null)
-        {
+                           int idleThreadTimeout, int niceShutdownPasses, boolean debugEnabled) {
+        if (instance != null) {
             throw new IllegalStateException("An instance of DeltaExecutor already exists.");
         }
 
         instance = new DeltaExecutor(
-            logger,
-            coreThreadCount,
-            maxThreadCount,
-            idleThreadTimeout,
-            niceShutdownPasses,
-            debugEnabled);
+                logger,
+                coreThreadCount,
+                maxThreadCount,
+                idleThreadTimeout,
+                niceShutdownPasses,
+                debugEnabled);
     }
 
     /**
      * Private constructor for DeltaExecutor
      */
     private DeltaExecutor(Logger logger, int coreThreadCount, int maxThreadCount,
-                          int idleThreadTimeout, int niceShutdownPasses, boolean debugEnabled)
-    {
+                          int idleThreadTimeout, int niceShutdownPasses, boolean debugEnabled) {
         this.logger = logger;
         this.niceShutdownPasses = niceShutdownPasses;
         this.debugEnabled = debugEnabled;
         this.taskMap = new ConcurrentHashMap<>();
 
         this.threadPoolExecutor = new ThreadPoolExecutor(
-            coreThreadCount,
-            maxThreadCount,
-            idleThreadTimeout,
-            TimeUnit.MINUTES,
-            new LinkedBlockingQueue<>(),
-            new ThreadFactoryBuilder().setNameFormat("delta-executor-pool-%d").build());
+                coreThreadCount,
+                maxThreadCount,
+                idleThreadTimeout,
+                TimeUnit.MINUTES,
+                new LinkedBlockingQueue<>(),
+                new ThreadFactoryBuilder().setNameFormat("delta-executor-pool-%d").build());
 
         this.acceptingNewTasks = true;
     }
 
-    private void runTask(long taskId)
-    {
+    private void runTask(long taskId) {
         AsyncTask asyncTask = taskMap.get(taskId);
 
-        if(asyncTask == null)
-        {
+        if (asyncTask == null) {
             severe("Task #" + taskId + " not found. Was it added it using DeltaExecutor#execute()?");
             return;
         }
 
-        try
-        {
-            if(asyncTask.switchToRunning())
-            {
+        try {
+            if (asyncTask.switchToRunning()) {
                 debug("Running task #" + taskId);
                 asyncTask.getRunnable().run();
                 debug("Completed task #" + taskId);
             }
-        }
-        catch(Exception ex)
-        {
+        } catch (Exception ex) {
             severe("Exception in task #" + taskId);
             ex.printStackTrace();
-        }
-        finally
-        {
+        } finally {
             debug("Cleaning up task #" + taskId);
             taskMap.remove(taskId);
         }
     }
 
-    private boolean shutdownNicely() throws InterruptedException
-    {
+    private boolean shutdownNicely() throws InterruptedException {
         boolean terminated = false;
 
-        for(int i = 1; i <= niceShutdownPasses && !terminated; ++i)
-        {
+        for (int i = 1; i <= niceShutdownPasses && !terminated; ++i) {
             info("(Pass " + i + " of " + niceShutdownPasses + ") " +
-                "Waiting 30 seconds for all tasks to complete ...");
+                    "Waiting 30 seconds for all tasks to complete ...");
 
             terminated = threadPoolExecutor.awaitTermination(30, TimeUnit.SECONDS);
 
-            if(terminated)
-            {
+            if (terminated) {
                 info("DeltaExecutor has been shutdown nicely.");
-            }
-            else
-            {
+            } else {
                 info("Tasks Remaining: " + taskMap.size());
             }
         }
@@ -267,18 +233,13 @@ public class DeltaExecutor
         return terminated;
     }
 
-    private void shutdownForcibly()
-    {
+    private void shutdownForcibly() {
         info("Failed to shutdown DeltaExecutor nicely. Shutting down forcibly ...");
 
-        for(Runnable runnable : threadPoolExecutor.shutdownNow())
-        {
-            try
-            {
+        for (Runnable runnable : threadPoolExecutor.shutdownNow()) {
+            try {
                 runnable.run();
-            }
-            catch(Exception ex)
-            {
+            } catch (Exception ex) {
                 ex.printStackTrace();
             }
         }
@@ -286,20 +247,16 @@ public class DeltaExecutor
         info("DeltaExecutor has been shutting down forcibly.");
     }
 
-    private void info(String input)
-    {
+    private void info(String input) {
         logger.info(input);
     }
 
-    private void severe(String input)
-    {
+    private void severe(String input) {
         logger.severe(input);
     }
 
-    private void debug(String input)
-    {
-        if(debugEnabled)
-        {
+    private void debug(String input) {
+        if (debugEnabled) {
             logger.info("[Debug] " + input);
         }
     }

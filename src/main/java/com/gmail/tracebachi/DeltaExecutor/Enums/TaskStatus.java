@@ -19,8 +19,7 @@ package com.gmail.tracebachi.DeltaExecutor.Enums;
 /**
  * Created by Trace Bachi (tracebachi@gmail.com, BigBossZee) on 3/19/16.
  */
-public enum TaskStatus
-{
+public enum TaskStatus {
     /**
      * Represents a task waiting to be run.
      */

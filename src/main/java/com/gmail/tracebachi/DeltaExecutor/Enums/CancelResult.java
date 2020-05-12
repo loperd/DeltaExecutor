@@ -19,8 +19,7 @@ package com.gmail.tracebachi.DeltaExecutor.Enums;
 /**
  * Created by Trace Bachi (tracebachi@gmail.com, BigBossZee) on 3/19/16.
  */
-public enum CancelResult
-{
+public enum CancelResult {
     /**
      * Represents a cancelled task.
      */

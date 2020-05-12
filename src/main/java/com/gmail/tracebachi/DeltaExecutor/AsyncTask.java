@@ -24,44 +24,36 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Created by Trace Bachi (tracebachi@gmail.com, BigBossZee) on 3/19/16.
  */
-public class AsyncTask
-{
+public class AsyncTask {
     private static final AtomicLong counter = new AtomicLong(0L);
 
     private final long id;
     private final Runnable runnable;
     private TaskStatus status = TaskStatus.WAITING;
 
-    public AsyncTask(Runnable runnable)
-    {
+    public AsyncTask(Runnable runnable) {
         this.id = counter.incrementAndGet();
         this.runnable = Preconditions.checkNotNull(runnable);
     }
 
-    public long getId()
-    {
+    public long getId() {
         return id;
     }
 
-    public Runnable getRunnable()
-    {
+    public Runnable getRunnable() {
         return runnable;
     }
 
-    public synchronized TaskStatus getStatus()
-    {
+    public synchronized TaskStatus getStatus() {
         return status;
     }
 
-    public synchronized void setStatus(TaskStatus status)
-    {
+    public synchronized void setStatus(TaskStatus status) {
         this.status = Preconditions.checkNotNull(status);
     }
 
-    public synchronized boolean switchToRunning()
-    {
-        if(status == TaskStatus.WAITING)
-        {
+    public synchronized boolean switchToRunning() {
+        if (status == TaskStatus.WAITING) {
             status = TaskStatus.RUNNING;
             return true;
         }
@@ -69,10 +61,8 @@ public class AsyncTask
         return false;
     }
 
-    public synchronized boolean switchToCancelled()
-    {
-        if(status == TaskStatus.WAITING)
-        {
+    public synchronized boolean switchToCancelled() {
+        if (status == TaskStatus.WAITING) {
             status = TaskStatus.CANCELLED;
             return true;
         }

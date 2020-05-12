@@ -23,11 +23,9 @@ import org.bukkit.plugin.java.JavaPlugin;
 /**
  * Created by Trace Bachi (tracebachi@gmail.com, BigBossZee) on 3/20/16.
  */
-public class DeltaExecutorPlugin extends JavaPlugin
-{
+public class DeltaExecutorPlugin extends JavaPlugin {
     @Override
-    public void onLoad()
-    {
+    public void onLoad() {
         saveDefaultConfig();
         reloadConfig();
 
@@ -38,49 +36,40 @@ public class DeltaExecutorPlugin extends JavaPlugin
         boolean debugEnabled = getConfig().getBoolean("Debug", false);
 
         DeltaExecutor.initialize(
-            getLogger(),
-            coreThreadCount,
-            maxThreadCount,
-            idleThreadTimeout,
-            niceShutdownPasses,
-            debugEnabled);
+                getLogger(),
+                coreThreadCount,
+                maxThreadCount,
+                idleThreadTimeout,
+                niceShutdownPasses,
+                debugEnabled);
     }
 
     @Override
-    public void onDisable()
-    {
+    public void onDisable() {
         DeltaExecutor.instance().shutdown();
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args)
-    {
-        if(!sender.hasPermission("DeltaExecutor.Debug"))
-        {
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (!sender.hasPermission("DeltaExecutor.Debug")) {
             sender.sendMessage("You do not have permission for this command.");
             return true;
         }
 
-        if(args.length == 0)
-        {
+        if (args.length == 0) {
             sender.sendMessage("/deltaexecutordebug <on|off>");
             return true;
         }
 
         DeltaExecutor instance = DeltaExecutor.instance();
 
-        if(args[0].equalsIgnoreCase("on"))
-        {
+        if (args[0].equalsIgnoreCase("on")) {
             instance.setDebugEnabled(true);
             sender.sendMessage("DeltaExecutorDebug: On");
-        }
-        else if(args[0].equalsIgnoreCase("off"))
-        {
+        } else if (args[0].equalsIgnoreCase("off")) {
             instance.setDebugEnabled(false);
-            sender.sendMessage( "DeltaExecutorDebug: Off");
-        }
-        else
-        {
+            sender.sendMessage("DeltaExecutorDebug: Off");
+        } else {
             sender.sendMessage("/deltaexecutordebug <on|off>");
         }
 
